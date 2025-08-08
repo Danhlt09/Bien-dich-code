@@ -25,10 +25,10 @@ jobs:
 
       - name: Compile Sketch
         run: |
-          arduino-cli compile --fqbn esp32:esp32:esp32doit-devkit-v1 src
+          arduino-cli compile --fqbn esp32:esp32:esp32doit-devkit-v1 --output-dir build src
 
-      - name: Upload compiled files
+      - name: Upload compiled firmware
         uses: actions/upload-artifact@v4
         with:
-          name: firmware
-          path: src/build/**/*.bin
+          name: firmware-bin
+          path: build/*.bin
