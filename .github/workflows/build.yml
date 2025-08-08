@@ -25,7 +25,7 @@ jobs:
 
       - name: Compile Sketch
         run: |
-          arduino-cli compile --fqbn esp32:esp32:esp32doit-devkit-v1 src/
+          arduino-cli compile --fqbn esp32:esp32:esp32doit-devkit-v1 src
 
       - name: Upload compiled files
         uses: actions/upload-artifact@v4
