@@ -10,22 +10,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
-      - name: Setup Arduino CLI
-        uses: arduino/setup-arduino-cli@v1
-        with:
-          version: latest
+      - name: Install Arduino CLI manually
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
+          sudo mv bin/arduino-cli /usr/local/bin/
 
       - name: Install ESP32 board
         run: |
+          arduino-cli config init
           arduino-cli core update-index
           arduino-cli core install esp32:esp32
 
       - name: Compile Sketch
         run: |
           arduino-cli compile --fqbn esp32:esp32:esp32doit-devkit-v1 src/
-      
+
       - name: Upload compiled files
         uses: actions/upload-artifact@v4
         with:
