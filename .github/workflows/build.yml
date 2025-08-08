@@ -23,12 +23,11 @@ jobs:
           arduino-cli core update-index
           arduino-cli core install esp32:esp32
 
-      - name: Compile Sketch
-        run: |
-          arduino-cli compile --fqbn esp32:esp32:esp32doit-devkit-v1 src
-
-      - name: Upload compiled files
+      - name: Upload compiled firmware
         uses: actions/upload-artifact@v4
         with:
-          name: firmware
-          path: src/build/**/*.bin
+          name: firmware-bin
+          path: |
+            ./src/build/**/*.bin
+            ./src/build/**/*.elf
+            ./src/build/**/*.map
