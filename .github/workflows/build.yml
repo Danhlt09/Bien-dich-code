@@ -1,0 +1,33 @@
+name: Build Arduino ESP32
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+
+      - name: Setup Arduino CLI
+        uses: arduino/setup-arduino-cli@v1
+        with:
+          version: latest
+
+      - name: Install ESP32 board
+        run: |
+          arduino-cli core update-index
+          arduino-cli core install esp32:esp32
+
+      - name: Compile Sketch
+        run: |
+          arduino-cli compile --fqbn esp32:esp32:esp32doit-devkit-v1 src/
+      
+      - name: Upload compiled files
+        uses: actions/upload-artifact@v3
+        with:
+          name: firmware
+          path: src/build/**/*.bin
