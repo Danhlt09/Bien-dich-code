@@ -1,4 +1,4 @@
-name: Build Arduino ESP32
+name: Build & Deploy ESP32 Firmware
 
 on:
   push:
@@ -26,13 +26,18 @@ jobs:
 
       - name: Compile Sketch
         run: |
-          mkdir -p firmware
-          arduino-cli compile --fqbn esp32:esp32:esp32doit-devkit-v1 --output-dir firmware src
-          # Di chuyển file .bin ra thư mục firmware nếu CLI tạo thêm thư mục con
-          find firmware -name "*.bin" -exec mv {} firmware/firmware_esp32.bin \;
+          mkdir -p gh-pages
+          arduino-cli compile --fqbn esp32:esp32:esp32doit-devkit-v1 --output-dir gh-pages src
+          find gh-pages -name "*.bin" -exec mv {} gh-pages/firmware_esp32.bin \;
 
-      - name: Upload compiled firmware
-        uses: actions/upload-artifact@v4
+      - name: Copy HTML to deploy folder
+        run: |
+          cp index.html gh-pages/  # đổi tên file nếu không phải index.html
+          # Nếu có CSS, JS, ảnh... thì copy luôn
+          cp -r *.css *.js *.png *.jpg 2>/dev/null || true gh-pages/
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          name: firmware-bin
-          path: firmware/firmware_esp32.bin
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: gh-pages
