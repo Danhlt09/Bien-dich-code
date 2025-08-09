@@ -12,23 +12,27 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Install Arduino CLI manually
+      - name: Install Arduino CLI
         run: |
           curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
           sudo mv bin/arduino-cli /usr/local/bin/
 
-      - name: Install ESP32 board
+      - name: Configure Arduino CLI
         run: |
           arduino-cli config init
+          arduino-cli config set board_manager.additional_urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
           arduino-cli core update-index
           arduino-cli core install esp32:esp32
 
       - name: Compile Sketch
         run: |
-          arduino-cli compile --fqbn esp32:esp32:esp32doit-devkit-v1 --output-dir build src
+          mkdir -p firmware
+          arduino-cli compile --fqbn esp32:esp32:esp32doit-devkit-v1 --output-dir firmware src
+          # Di chuyển file .bin ra thư mục firmware nếu CLI tạo thêm thư mục con
+          find firmware -name "*.bin" -exec mv {} firmware/firmware_esp32.bin \;
 
       - name: Upload compiled firmware
         uses: actions/upload-artifact@v4
         with:
           name: firmware-bin
-          path: build/*.bin
+          path: firmware/firmware_esp32.bin
