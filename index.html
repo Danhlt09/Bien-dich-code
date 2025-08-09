@@ -1,0 +1,259 @@
+<!doctype html>
+
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Arduino Web Editor & Build — Bien-dich-code</title>
+  <!-- CodeMirror 5 (stable) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/codemirror.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.15/mode/clike/clike.min.js"></script>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;margin:18px}
+    header{display:flex;gap:12px;align-items:center}
+    h1{font-size:18px;margin:0}
+    #editor{height:520px;border:1px solid #ddd}
+    .controls{margin-top:12px;display:flex;gap:8px;align-items:center}
+    button{padding:8px 12px;font-size:14px}
+    input[type=text]{padding:6px 8px;font-size:14px}
+    .status{margin-top:12px;padding:10px;border-radius:6px;background:#f7f7f7}
+    .small{font-size:13px;color:#444}
+    label{font-size:13px}
+    .right{margin-left:auto}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Arduino Web Editor & Build — <span class="small">Bien-dich-code</span></h1>
+    <div class="right small">Repo: <strong>Danhlt09/Bien-dich-code</strong></div>
+  </header>  <p class="small">Lưu ý: để thao tác (push / lấy artifact) bạn cần <strong>Personal Access Token (PAT)</strong> của GitHub có quyền <code>repo</code> (private repo) hoặc public repo quyền tối thiểu. Token không được gửi tới server nào — chỉ lưu tạm trong trình duyệt.</p>  <div>
+    <textarea id="editor">// Viết code Arduino ở đây
+// Ví dụ: blinkvoid setup() { pinMode(2, OUTPUT); }
+
+void loop() { digitalWrite(2, HIGH); delay(500); digitalWrite(2, LOW); delay(500); } </textarea>
+
+  </div>  <div class="controls">
+    <label>GitHub PAT: <input id="pat" type="text" placeholder="ghp_... (nhập token)" size="40"></label>
+    <button id="saveBuild">Save & Build</button>
+    <button id="getBin" disabled>Download Latest Firmware</button>
+    <button id="openRaw">Open current src.ino</button>
+    <button id="loadFromRepo">Load from repo</button>
+  </div>  <div class="status" id="status">
+    <div id="msg">Trạng thái: chờ thao tác.</div>
+    <div id="buildInfo"></div>
+  </div>  <script>
+    // --------- Configuration ---------
+    const owner = 'Danhlt09';
+    const repo = 'Bien-dich-code';
+    const pathInRepo = 'src/src.ino';
+    const branch = 'main';
+    const artifactName = 'firmware-bin';
+    // ---------------------------------
+
+    // Initialize CodeMirror
+    const cm = CodeMirror.fromTextArea(document.getElementById('editor'), {
+      lineNumbers: true,
+      mode: 'text/x-c++src',
+      indentUnit: 2,
+      tabSize: 2
+    });
+
+    const patInput = document.getElementById('pat');
+    const saveBtn = document.getElementById('saveBuild');
+    const getBinBtn = document.getElementById('getBin');
+    const statusDiv = document.getElementById('msg');
+    const buildInfoDiv = document.getElementById('buildInfo');
+    const openRawBtn = document.getElementById('openRaw');
+    const loadBtn = document.getElementById('loadFromRepo');
+
+    function setStatus(text){ statusDiv.textContent = 'Trạng thái: ' + text; }
+
+    // Helper: GitHub API wrapper
+    async function ghFetch(path, options={}){
+      const token = patInput.value.trim();
+      const headers = options.headers || {};
+      headers['Accept'] = options.accept || 'application/vnd.github+json';
+      if(token) headers['Authorization'] = 'Bearer ' + token;
+      const res = await fetch('https://api.github.com' + path, {...options, headers});
+      if(res.status === 401) throw new Error('Unauthorized — kiểm tra token');
+      return res;
+    }
+
+    // Load current src.ino content and SHA
+    async function loadCurrent(){
+      try{
+        setStatus('Đang tải nội dung src.ino từ repo...');
+        const res = await ghFetch(`/repos/${owner}/${repo}/contents/${encodeURIComponent(pathInRepo)}?ref=${branch}`);
+        if(res.status === 404){ setStatus('Không tìm thấy file trong repo.'); return; }
+        const j = await res.json();
+        const content = atob(j.content.replace(/\n/g,''));
+        cm.setValue(content);
+        cm.clearHistory();
+        cm.markClean();
+        saveBtn.dataset.sha = j.sha; // lưu SHA hiện tại
+        setStatus('Nội dung đã tải. SHA: ' + j.sha);
+      }catch(e){ setStatus('Lỗi khi tải: ' + e.message); }
+    }
+
+    loadBtn.addEventListener('click', loadCurrent);
+
+    openRawBtn.addEventListener('click', async ()=>{
+      const raw = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${pathInRepo}`;
+      window.open(raw, '_blank');
+    });
+
+    // Commit new content to repo
+    async function commitCode(code){
+      try{
+        setStatus('Chuẩn bị commit...');
+        const encoded = btoa(unescape(encodeURIComponent(code)));
+        // Get current file SHA if not loaded
+        let sha = saveBtn.dataset.sha;
+        if(!sha){
+          const r = await ghFetch(`/repos/${owner}/${repo}/contents/${encodeURIComponent(pathInRepo)}?ref=${branch}`);
+          if(r.ok){ const jr = await r.json(); sha = jr.sha; }
+        }
+        const body = {
+          message: 'Update src.ino via web editor',
+          content: encoded,
+          branch
+        };
+        if(sha) body.sha = sha;
+
+        const res = await ghFetch(`/repos/${owner}/${repo}/contents/${encodeURIComponent(pathInRepo)}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        if(!res.ok) {
+          const t = await res.text(); throw new Error('Commit failed: ' + res.status + ' ' + t);
+        }
+        const j = await res.json();
+        saveBtn.dataset.sha = j.content.sha;
+        setStatus('Commit thành công. SHA mới: ' + j.content.sha);
+        return j;
+      }catch(e){ setStatus('Lỗi commit: ' + e.message); throw e; }
+    }
+
+    // Poll for workflow run triggered by push on branch
+    async function waitForBuild(commitSha, timeoutMs=10*60*1000){
+      setStatus('Đang chờ GitHub Actions build...');
+      const start = Date.now();
+      while(true){
+        // Check recent workflow runs for this branch
+        try{
+          const res = await ghFetch(`/repos/${owner}/${repo}/actions/runs?branch=${branch}&event=push`);
+          if(!res.ok) throw new Error('Không thể lấy workflow runs');
+          const j = await res.json();
+          const runs = j.workflow_runs || [];
+          // Find a run that used our commit (head_sha) and is completed
+          const candidate = runs.find(r => r.head_sha === commitSha);
+          if(candidate){
+            buildInfoDiv.innerHTML = `Workflow: <strong>${candidate.name || candidate.workflow_id}</strong> — Run id: ${candidate.id} — status: ${candidate.status} — conclusion: ${candidate.conclusion}`;
+            if(candidate.status === 'completed'){
+              setStatus('Build completed. conclusion: ' + candidate.conclusion);
+              return candidate;
+            } else {
+              setStatus('Build running (status: ' + candidate.status + '). Run id: ' + candidate.id);
+            }
+          } else if(runs.length>0){
+            // optionally show top run
+            buildInfoDiv.innerHTML = `Latest run head_sha: ${runs[0].head_sha} status: ${runs[0].status}`;
+            setStatus('Chưa thấy run ứng với commit của bạn — đang chờ...');
+          } else {
+            setStatus('Chưa có workflow runs — có thể workflow chưa được kích hoạt.');
+          }
+        }catch(e){ setStatus('Lỗi khi kiểm tra workflow: ' + e.message); }
+
+        if(Date.now() - start > timeoutMs) throw new Error('Timeout khi chờ build');
+        // wait 6s
+        await new Promise(r=>setTimeout(r,6000));
+      }
+    }
+
+    // Find artifact and download .bin
+    async function downloadArtifactBlob(runId){
+      setStatus('Tìm artifact tên "' + artifactName + '"...');
+      try{
+        // List artifacts for the repo (not per run) and try to find one created by runId or name
+        const res = await ghFetch(`/repos/${owner}/${repo}/actions/artifacts`);
+        if(!res.ok) throw new Error('Không lấy artifacts');
+        const j = await res.json();
+        const arts = j.artifacts || [];
+        // Prefer artifact with matching name and most recent
+        let art = arts.find(a => a.name === artifactName && a.workflow_run && a.workflow_run.id == runId);
+        if(!art) art = arts.find(a => a.name === artifactName);
+        if(!art) throw new Error('Không tìm artifact ' + artifactName);
+        setStatus('Artifact tìm thấy: id=' + art.id + ', expires_at: ' + art.expired);
+        // Get archive download URL
+        const dl = art.archive_download_url; // requires auth and Accept header
+        const token = patInput.value.trim();
+        const fetchRes = await fetch(dl, { headers: { Authorization: 'Bearer ' + token, Accept: 'application/octet-stream' } });
+        if(!fetchRes.ok) throw new Error('Tải artifact thất bại: ' + fetchRes.status);
+        const blob = await fetchRes.blob();
+        // The artifact is a zip; we will offer it as a download. The user can unzip to get .bin
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${repo}-${artifactName}.zip`;
+        a.textContent = 'Download firmware zip';
+        getBinBtn.disabled = false;
+        getBinBtn.onclick = ()=>{ a.click(); };
+        buildInfoDiv.innerHTML += `<div><a href="#" onclick="">Click 'Download Latest Firmware' để tải artifact ZIP.</a></div>`;
+        setStatus('Artifact đã sẵn sàng để tải (ZIP). Bạn cần giải nén để lấy .bin.');
+      }catch(e){ setStatus('Lỗi tải artifact: ' + e.message); }
+    }
+
+    saveBtn.addEventListener('click', async ()=>{
+      try{
+        const code = cm.getValue();
+        if(!patInput.value.trim()){ if(!confirm('Bạn chưa nhập PAT. Tiếp tục mà không có PAT sẽ không commit được.')) return; }
+        setStatus('Bắt đầu commit...');
+        const commitRes = await commitCode(code);
+        const sha = commitRes.content.sha;
+        setStatus('Commit xong — chờ workflow. Commit SHA: ' + sha);
+        // Wait for Actions run corresponding to this commit
+        const run = await waitForBuild(sha);
+        // When run completed, try to download artifact
+        await downloadArtifactBlob(run.id);
+      }catch(e){ setStatus('Lỗi trong luồng Save&Build: ' + e.message); }
+    });
+
+    // Quick: get latest artifact (if any)
+    getBinBtn.addEventListener('click', async ()=>{
+      try{
+        setStatus('Lấy artifact gần nhất...');
+        // list artifacts
+        const res = await ghFetch(`/repos/${owner}/${repo}/actions/artifacts`);
+        if(!res.ok) throw new Error('Không lấy artifacts');
+        const j = await res.json();
+        const arts = j.artifacts || [];
+        const art = arts.find(a => a.name === artifactName) || arts[0];
+        if(!art) { setStatus('Không có artifact nào.'); return; }
+        const dl = art.archive_download_url;
+        const fetchRes = await fetch(dl, { headers: { Authorization: 'Bearer ' + patInput.value.trim(), Accept: 'application/octet-stream' } });
+        if(!fetchRes.ok) throw new Error('Tải artifact thất bại: ' + fetchRes.status);
+        const blob = await fetchRes.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `${repo}-${artifactName}.zip`; a.click();
+        setStatus('Đã tải artifact ZIP (mở để lấy file .bin).');
+      }catch(e){ setStatus('Lỗi khi tải artifact: ' + e.message); }
+    });
+
+    // On load, try to load current file (best-effort, public repo works without token)
+    (async ()=>{
+      try{ await loadCurrent(); }catch(e){ /* ignore */ }
+    })();
+  </script>  <!-- Footer: hướng dẫn ngắn
+    - Cách dùng: nhập token (PAT) nếu repo private hoặc để có quyền push.
+    - Nhấn "Load from repo" để lấy nội dung hiện có.
+    - Chỉnh sửa, nhấn "Save & Build" để commit -> kích hoạt GitHub Actions.
+    - Kết quả build được tải về dưới dạng artifact ZIP (chứa .bin).
+
+    Hạn chế:
+    - CORS và GitHub API: việc tải artifact ZIP yêu cầu token và có thể có redirect; mã này đã thử xử lý cơ bản nhưng trên một vài trình duyệt/thiết lập CORS có thể cần proxy.
+    - Token lưu trong bộ nhớ trình duyệt — đừng dùng token nhạy cảm trên máy lạ.
+  --></body>
+  </html>
