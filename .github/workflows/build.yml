@@ -1,4 +1,4 @@
-name: Build & Deploy ESP32 Firmware
+name: Build Arduino ESP32
 
 on:
   push:
@@ -12,32 +12,23 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Install Arduino CLI
+      - name: Install Arduino CLI manually
         run: |
           curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
           sudo mv bin/arduino-cli /usr/local/bin/
 
-      - name: Configure Arduino CLI
+      - name: Install ESP32 board
         run: |
           arduino-cli config init
-          arduino-cli config set board_manager.additional_urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
           arduino-cli core update-index
           arduino-cli core install esp32:esp32
 
       - name: Compile Sketch
         run: |
-          mkdir -p gh-pages
-          arduino-cli compile --fqbn esp32:esp32:esp32doit-devkit-v1 --output-dir gh-pages src
-          find gh-pages -name "*.bin" -exec mv {} gh-pages/firmware_esp32.bin \;
+          arduino-cli compile --fqbn esp32:esp32:esp32doit-devkit-v1 --output-dir build src
 
-      - name: Copy HTML to deploy folder
-        run: |
-          cp index.html gh-pages/  # đổi tên file nếu không phải index.html
-          # Nếu có CSS, JS, ảnh... thì copy luôn
-          cp -r *.css *.js *.png *.jpg 2>/dev/null || true gh-pages/
-
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Upload compiled firmware
+        uses: actions/upload-artifact@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: gh-pages
+          name: firmware-bin
+          path: build/*.bin
