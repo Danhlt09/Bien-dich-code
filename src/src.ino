@@ -3,6 +3,6 @@ void setup() {
 }
 
 void loop() {
-  Serial.println("Hello from ESP32");
+  Serial.println("Hello danh");
   delay(1000);
 }
