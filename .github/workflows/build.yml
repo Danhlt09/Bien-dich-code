@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Tải mã nguồn về
+      # 1. Tải mã nguồn
       - name: Checkout repository
         uses: actions/checkout@v3
 
@@ -27,17 +27,14 @@ jobs:
           arduino-cli core update-index
           arduino-cli core install esp32:esp32
 
-      # 4. Cài thư viện cần thiết (nếu có)
-      # Ví dụ: arduino-cli lib install "WiFi" "ESPAsyncWebServer"
-
-      # 5. Biên dịch file src/src.ino
+      # 4. Biên dịch src/src.ino cho ESP32 CP2102 DevKit v1
       - name: Compile firmware
         run: |
-          arduino-cli compile --fqbn esp32:esp32:esp32 src/src.ino
+          arduino-cli compile --fqbn esp32:esp32:esp32doit-devkit-v1 --output-dir build src/src.ino
 
-      # 6. Lưu file .bin xuất ra artifacts
+      # 5. Lưu file .bin ra artifact
       - name: Upload firmware
         uses: actions/upload-artifact@v3
         with:
           name: firmware-bin
-          path: src/build/esp32.esp32.esp32/src.ino.bin
+          path: build/*.bin
