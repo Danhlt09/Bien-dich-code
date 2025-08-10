@@ -24,10 +24,11 @@ jobs:
           arduino-cli core update-index
           arduino-cli core install esp32:esp32@2.0.11
 
-      - name: Install required libraries
+      - name: Install libraries from GitHub
         run: |
-          arduino-cli lib install "ESP Async WebServer"
-          arduino-cli lib install "AsyncTCP@1.1.5"
+          git clone
+https://github.com/me-no-dev/AsyncTCP.git /home/runner/Arduino/libraries/AsyncTCP
+          git clone https://github.com/me-no-dev/ESPAsyncWebServer.git /home/runner/Arduino/libraries/ESPAsyncWebServer
 
       - name: Compile firmware
         run: |
