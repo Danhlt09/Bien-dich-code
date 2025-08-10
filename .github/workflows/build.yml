@@ -1,34 +1,43 @@
-name: Build Arduino ESP32
+name: Build ESP32 Firmware
 
 on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
 
-      - name: Install Arduino CLI manually
+    steps:
+      # 1. Tải mã nguồn về
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2. Cài Arduino CLI
+      - name: Install Arduino CLI
         run: |
           curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
           sudo mv bin/arduino-cli /usr/local/bin/
 
-      - name: Install ESP32 board
+      # 3. Cài ESP32 core
+      - name: Setup ESP32 Core
         run: |
-          arduino-cli config init
           arduino-cli core update-index
           arduino-cli core install esp32:esp32
 
-      - name: Compile Sketch
-        run: |
-          arduino-cli compile --fqbn esp32:esp32:esp32doit-devkit-v1 --output-dir build src
+      # 4. Cài thư viện cần thiết (nếu có)
+      # Ví dụ: arduino-cli lib install "WiFi" "ESPAsyncWebServer"
 
-      - name: Upload compiled firmware
-        uses: actions/upload-artifact@v4
+      # 5. Biên dịch file src/src.ino
+      - name: Compile firmware
+        run: |
+          arduino-cli compile --fqbn esp32:esp32:esp32 src/src.ino
+
+      # 6. Lưu file .bin xuất ra artifacts
+      - name: Upload firmware
+        uses: actions/upload-artifact@v3
         with:
           name: firmware-bin
-          path: build/*.bin
+          path: src/build/esp32.esp32.esp32/src.ino.bin
