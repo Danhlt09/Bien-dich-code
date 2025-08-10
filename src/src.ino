@@ -67,7 +67,7 @@ unsigned long spawnInterval = 1000; // ms
 // Game state
 bool gameOver = false;
 unsigned long lastFrame = 0;
-const unsigned long FRAME_MS = 33; // ~30 FPS
+const unsigned long FRAME_MS = 45; // ~30 FPS
 int score = 0;
 int displayScore = 0;
 
@@ -246,9 +246,9 @@ void loop() {
 
   // Vẽ nhân vật
   if (playerOldY != curDinoY) {
-    drawPlayer(playerX, curDinoY, ST77XX_WHITE);
+    drawPlayer(playerX, curDinoY, ST77XX_RED);
   } else {
-    drawPlayer(playerX, curDinoY, ST77XX_WHITE);
+    drawPlayer(playerX, curDinoY, ST77XX_RED);
   }
 
   // Cập nhật chướng ngại vật
@@ -271,7 +271,7 @@ void loop() {
 
   // Vẽ chướng ngại vật
   for (int i = 0; i < MAX_OBS; i++) {
-    if (obs[i].active) drawObstacle(obs[i], ST77XX_WHITE);
+    if (obs[i].active) drawObstacle(obs[i], ST77XX_BLUE);
   }
 
   // Vẽ mặt đất
