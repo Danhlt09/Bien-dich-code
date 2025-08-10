@@ -22,12 +22,12 @@ jobs:
       - name: Setup ESP32 Core
         run: |
           arduino-cli core update-index
-          arduino-cli core install esp32:esp32
+          arduino-cli core install esp32:esp32@2.0.11
 
       - name: Install required libraries
         run: |
           arduino-cli lib install "ESP Async WebServer"
-          arduino-cli lib install "AsyncTCP@1.1.5"
+          arduino-cli lib install "AsyncTCP"
 
       - name: Compile firmware
         run: |
