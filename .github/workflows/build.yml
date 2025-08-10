@@ -27,6 +27,11 @@ jobs:
           arduino-cli core update-index
           arduino-cli core install esp32:esp32
 
+      - name: Install required libraries
+        run: |
+          arduino-cli lib install "ESP Async WebServer"
+          arduino-cli lib install "AsyncTCP"
+
       # 4. Biên dịch src/src.ino cho ESP32 CP2102 DevKit v1
       - name: Compile firmware
         run: |
