@@ -1,7 +1,7 @@
 #include <TFT_eSPI.h>
 #include <SPI.h>
 
-// Cấu hình chân cho ST7735S
+// Cấu hình chân cho ST7735S (định nghĩa tĩnh)
 #define TFT_SCLK 5   // SCL
 #define TFT_MOSI 18  // SDA
 #define TFT_CS   22  // CS
@@ -24,33 +24,29 @@ int cactusSpeed = 2; // Tốc độ di chuyển cây xương rồng
 int score = 0; // Điểm số
 bool gameOver = false;
 
-// Hàm vẽ khủng long (hình chữ nhật đơn giản)
+// Hàm vẽ khủng long
 void drawDino() {
-  tft.fillRect(10, dinoY, 10, 10, TFT_GREEN); // Khủng long là hình vuông 10x10
+  tft.fillRect(10, dinoY, 10, 10, TFT_GREEN);
 }
 
 // Hàm vẽ cây xương rồng
 void drawCactus() {
-  tft.fillRect(cactusX, 120, 5, 10, TFT_RED); // Cây xương rồng là hình vuông 5x10
+  tft.fillRect(cactusX, 120, 5, 10, TFT_RED);
 }
 
 // Hàm kiểm tra va chạm
 bool checkCollision() {
   if (cactusX >= 10 && cactusX <= 20 && dinoY >= 120) {
-    return true; // Va chạm
+    return true;
   }
   return false;
 }
 
 void setup() {
-  // Khởi tạo màn hình với cấu hình chân
+  // Khởi tạo màn hình (chân đã được định nghĩa tĩnh)
   tft.init();
-  tft.setRotation(1); // Xoay màn hình nếu cần (0-3 tùy hướng)
-  tft.fillScreen(TFT_BLACK); // Xóa màn hình
-  
-  // Cấu hình chân trong code
-  tft.begin();
-  tft.setPinout(TFT_MOSI, TFT_SCLK, TFT_CS, TFT_DC, TFT_RST);
+  tft.setRotation(1); // Xoay màn hình nếu cần
+  tft.fillScreen(TFT_BLACK);
   
   // Cấu hình nút nhấn
   pinMode(BUTTON_PIN, INPUT_PULLUP);
@@ -61,43 +57,35 @@ void setup() {
 
 void loop() {
   if (!gameOver) {
-    // Xóa màn hình (phần trên đường đất)
     tft.fillRect(0, 0, 80, 130, TFT_BLACK);
     
-    // Đọc nút nhấn để nhảy
     if (digitalRead(BUTTON_PIN) == LOW && dinoY == 120) {
       dinoVelocity = jumpPower;
     }
     
-    // Cập nhật vị trí khủng long
     dinoVelocity += gravity;
     dinoY += dinoVelocity;
     
-    // Giới hạn khủng long không vượt quá mặt đất
     if (dinoY > 120) {
       dinoY = 120;
       dinoVelocity = 0;
     }
     
-    // Cập nhật vị trí cây xương rồng
     cactusX -= cactusSpeed;
     if (cactusX < -5) {
-      cactusX = 80; // Reset cây xương rồng
-      score += 10; // Tăng điểm
+      cactusX = 80;
+      score += 10;
     }
     
-    // Vẽ các đối tượng
     drawDino();
     drawCactus();
     
-    // Hiển thị điểm số
     tft.setTextColor(TFT_WHITE, TFT_BLACK);
     tft.setTextSize(1);
     tft.setCursor(0, 0);
     tft.print("Score: ");
     tft.print(score);
     
-    // Kiểm tra va chạm
     if (checkCollision()) {
       gameOver = true;
       tft.fillScreen(TFT_BLACK);
@@ -108,6 +96,6 @@ void loop() {
       tft.print(score);
     }
     
-    delay(50); // Điều chỉnh tốc độ trò chơi
+    delay(50);
   }
 }
