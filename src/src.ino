@@ -249,6 +249,8 @@ void loop() {
     spawnInterval = 700 + rrand(0, 700);
   }
 
+  // Bắt đầu giao tiếp SPI
+  SPI.beginTransaction(SPISettings(40000000, MSBFIRST, SPI_MODE0));
   for (int i = 0; i < MAX_OBS; i++) if (obs[i].active) drawObstacle(obs[i], ST77XX_WHITE);
 
   tft.drawFastHLine(0, GROUND_Y, SCR_W, ST77XX_WHITE);
@@ -286,5 +288,6 @@ void loop() {
   }
 
   prevDinoY = curDinoY;
+  // Kết thúc giao tiếp SPI
   SPI.endTransaction();
 }
