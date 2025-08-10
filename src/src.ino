@@ -42,7 +42,7 @@ const int DINO_H = 12;
 float dinoY = GROUND_Y - DINO_H;
 float dinoV = 0;
 const float GRAVITY = 1.3f;
-const float JUMP_V = -9.0f;
+const float JUMP_V = -1.05f;
 bool onGround = true;
 
 // Player position (đồng bộ với dino)
@@ -266,7 +266,7 @@ void loop() {
   if (now - lastSpawn >= spawnInterval) {
     spawnOne();
     lastSpawn = now;
-    spawnInterval = 1200 + rrand(0, 1200);
+    spawnInterval = 900 + rrand(0, 900);
   }
 
   // Vẽ chướng ngại vật
