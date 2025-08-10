@@ -1,4 +1,4 @@
-name: Build ESP32 Firmware
+name: Build ESP32 WebUI Deauther
 
 on:
   push:
@@ -11,17 +11,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Tải mã nguồn
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 2. Cài Arduino CLI
       - name: Install Arduino CLI
         run: |
           curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
           sudo mv bin/arduino-cli /usr/local/bin/
 
-      # 3. Cài ESP32 core
       - name: Setup ESP32 Core
         run: |
           arduino-cli core update-index
@@ -32,12 +29,10 @@ jobs:
           arduino-cli lib install "ESP Async WebServer"
           arduino-cli lib install "AsyncTCP"
 
-      # 4. Biên dịch src/src.ino cho ESP32 CP2102 DevKit v1
       - name: Compile firmware
         run: |
           arduino-cli compile --fqbn esp32:esp32:esp32doit-devkit-v1 --output-dir build src/src.ino
 
-      # 5. Lưu file .bin ra artifact
       - name: Upload firmware
         uses: actions/upload-artifact@v4
         with:
