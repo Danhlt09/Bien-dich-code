@@ -41,8 +41,8 @@ const int DINO_W = 12;
 const int DINO_H = 12;
 float dinoY = GROUND_Y - DINO_H;
 float dinoV = 0;
-const float GRAVITY = 1.0f;
-const float JUMP_V = -1.05f;
+const float GRAVITY = 1.35f;
+const float JUMP_V = -9.6f;
 bool onGround = true;
 
 // Player position (đồng bộ với dino)
@@ -67,7 +67,7 @@ unsigned long spawnInterval = 1000; // ms
 // Game state
 bool gameOver = false;
 unsigned long lastFrame = 0;
-const unsigned long FRAME_MS = 20; // ~30 FPS
+const unsigned long FRAME_MS = 25; // ~30 FPS
 int score = 0;
 int displayScore = 0;
 
@@ -124,7 +124,7 @@ void drawGround() {
 void drawScore() {
   int sx = SCR_W - 46;
   tft.fillRect(sx, 2, 44, 12, ST77XX_BLACK);
-  tft.setTextSize(1.5);
+  tft.setTextSize(1);
   tft.setTextColor(ST77XX_YELLOW);
   tft.setCursor(sx + 2, 3);
   tft.print("S:");
@@ -192,12 +192,12 @@ void setup() {
   tft.fillScreen(ST77XX_BLACK);
 
   randomSeed(analogRead(34)); // Đảm bảo GPIO34 thả nổi
-  tft.setTextSize(1.3);
+  tft.setTextSize(1.2);
   tft.setTextColor(ST77XX_YELLOW);
   tft.setCursor(10, 8);
-  tft.print("GAME CUA DANH ");
+  tft.print("GAME CUA DANH");
   tft.setCursor(10, 20);
-  tft.print("{°-°}");
+  tft.print("---------------------");
   delay(2000);
 
   resetGame();
@@ -266,7 +266,7 @@ void loop() {
   if (now - lastSpawn >= spawnInterval) {
     spawnOne();
     lastSpawn = now;
-    spawnInterval = 900 + rrand(0, 900);
+    spawnInterval = 700 + rrand(0, 700);
   }
 
   // Vẽ chướng ngại vật
@@ -294,7 +294,7 @@ void loop() {
       tft.print("Score:");
       tft.print(displayScore);
       tft.setCursor(36, 52);
-      tft.print("NGU");
+      tft.print("--NGU--");
       gameOver = true;
       return;
     }
