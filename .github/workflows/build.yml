@@ -1,9 +1,6 @@
-name: Build ESP32 WebUI Deauther
+name: Build ESP32 Firmware
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 jobs:
@@ -11,31 +8,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Lấy mã nguồn
         uses: actions/checkout@v3
 
-      - name: Install Arduino CLI
+      - name: Cài Arduino CLI
         run: |
           curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
           sudo mv bin/arduino-cli /usr/local/bin/
 
-      - name: Setup ESP32 Core
+      - name: Cấu hình Board ESP32
         run: |
+          arduino-cli config init
+          arduino-cli config set board_manager.additional_urls https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
           arduino-cli core update-index
-          arduino-cli core install esp32:esp32@2.0.11
+          arduino-cli core install esp32:esp32
 
-      - name: Install libraries from GitHub
+      - name: Biên dịch code
         run: |
-          git clone
-https://github.com/me-no-dev/AsyncTCP.git /home/runner/Arduino/libraries/AsyncTCP
-          git clone https://github.com/me-no-dev/ESPAsyncWebServer.git /home/runner/Arduino/libraries/ESPAsyncWebServer
+          mkdir -p build
+          arduino-cli compile --fqbn esp32:esp32:esp32doit-devkit-v1 ./ --output-dir build
 
-      - name: Compile firmware
-        run: |
-          arduino-cli compile --fqbn esp32:esp32:esp32doit-devkit-v1 --output-dir build src/src.ino
-
-      - name: Upload firmware
-        uses: actions/upload-artifact@v4
+      - name: Lưu file .bin
+        uses: actions/upload-artifact@v3
         with:
           name: firmware-bin
           path: build/*.bin
