@@ -124,7 +124,7 @@ void drawGround() {
 void drawScore() {
   int sx = SCR_W - 46;
   tft.fillRect(sx, 2, 44, 12, ST77XX_BLACK);
-  tft.setTextSize(1);
+  tft.setTextSize(1.5);
   tft.setTextColor(ST77XX_YELLOW);
   tft.setCursor(sx + 2, 3);
   tft.print("S:");
@@ -192,13 +192,13 @@ void setup() {
   tft.fillScreen(ST77XX_BLACK);
 
   randomSeed(analogRead(34)); // Đảm bảo GPIO34 thả nổi
-  tft.setTextSize(1);
-  tft.setTextColor(ST77XX_WHITE);
+  tft.setTextSize(2);
+  tft.setTextColor(ST77XX_YELLOW);
   tft.setCursor(10, 8);
-  tft.print("Dino (Optimized)");
+  tft.print("Game của danh ");
   tft.setCursor(10, 20);
-  tft.print("BTN: GPIO23, Press to start");
-  delay(800);
+  tft.print("🖕🖕🖕");
+  delay(2000);
 
   resetGame();
 }
@@ -287,14 +287,14 @@ void loop() {
     if (obs[i].active && collideWith(obs[i])) {
       drawPlayer(playerX, curDinoY, ST77XX_RED);
       tft.setTextColor(ST77XX_WHITE);
-      tft.setTextSize(1);
+      tft.setTextSize(2);
       tft.setCursor(42, 28);
       tft.print("GAME OVER");
       tft.setCursor(36, 40);
       tft.print("Score:");
       tft.print(displayScore);
       tft.setCursor(36, 52);
-      tft.print("Nhan de choi lai");
+      tft.print("Non quá, chơi lại đi");
       gameOver = true;
       return;
     }
