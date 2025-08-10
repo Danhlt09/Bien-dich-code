@@ -246,9 +246,9 @@ void loop() {
 
   // Vẽ nhân vật
   if (playerOldY != curDinoY) {
-    drawPlayer(playerX, curDinoY, ST77XX_RED);
+    drawPlayer(playerX, curDinoY, ST77XX_YELLOW);
   } else {
-    drawPlayer(playerX, curDinoY, ST77XX_RED);
+    drawPlayer(playerX, curDinoY, ST77XX_YELLOW);
   }
 
   // Cập nhật chướng ngại vật
@@ -271,7 +271,7 @@ void loop() {
 
   // Vẽ chướng ngại vật
   for (int i = 0; i < MAX_OBS; i++) {
-    if (obs[i].active) drawObstacle(obs[i], ST77XX_BLUE);
+    if (obs[i].active) drawObstacle(obs[i], ST77XX_WHITE);
   }
 
   // Vẽ mặt đất
