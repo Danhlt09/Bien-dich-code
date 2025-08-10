@@ -27,7 +27,7 @@ jobs:
       - name: Install required libraries
         run: |
           arduino-cli lib install "ESP Async WebServer"
-          arduino-cli lib install "AsyncTCP"
+          arduino-cli lib install "AsyncTCP@1.1.5"
 
       - name: Compile firmware
         run: |
