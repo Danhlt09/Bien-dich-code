@@ -41,7 +41,7 @@ const int DINO_W = 12;
 const int DINO_H = 12;
 float dinoY = GROUND_Y - DINO_H;
 float dinoV = 0;
-const float GRAVITY = 0.95f;
+const float GRAVITY = 1.3f;
 const float JUMP_V = -9.0f;
 bool onGround = true;
 
@@ -67,7 +67,7 @@ unsigned long spawnInterval = 1000; // ms
 // Game state
 bool gameOver = false;
 unsigned long lastFrame = 0;
-const unsigned long FRAME_MS = 45; // ~30 FPS
+const unsigned long FRAME_MS = 20; // ~30 FPS
 int score = 0;
 int displayScore = 0;
 
@@ -266,7 +266,7 @@ void loop() {
   if (now - lastSpawn >= spawnInterval) {
     spawnOne();
     lastSpawn = now;
-    spawnInterval = 700 + rrand(0, 700);
+    spawnInterval = 1200 + rrand(0, 1200);
   }
 
   // Vẽ chướng ngại vật
