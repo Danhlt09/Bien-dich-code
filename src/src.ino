@@ -257,7 +257,7 @@ void loop() {
     eraseObstacle(obs[i]);
     obs[i].prevX = obs[i].x;
     obs[i].x -= baseSpeed;
-    if (obs[i].x + o.w < -10) {
+    if (obs[i].x + obs[i].w < -10) { // Sửa lỗi o.w thành obs[i].w
       obs[i].active = false;
     }
   }
