@@ -41,7 +41,7 @@ const int DINO_W = 12;
 const int DINO_H = 12;
 float dinoY = GROUND_Y - DINO_H;
 float dinoV = 0;
-const float GRAVITY = 1.3f;
+const float GRAVITY = 1.0f;
 const float JUMP_V = -1.05f;
 bool onGround = true;
 
@@ -192,12 +192,12 @@ void setup() {
   tft.fillScreen(ST77XX_BLACK);
 
   randomSeed(analogRead(34)); // Đảm bảo GPIO34 thả nổi
-  tft.setTextSize(2);
+  tft.setTextSize(1.3);
   tft.setTextColor(ST77XX_YELLOW);
   tft.setCursor(10, 8);
-  tft.print("Game của danh ");
+  tft.print("GAME CUA DANH ");
   tft.setCursor(10, 20);
-  tft.print("🖕🖕🖕");
+  tft.print("{°-°}");
   delay(2000);
 
   resetGame();
@@ -287,14 +287,14 @@ void loop() {
     if (obs[i].active && collideWith(obs[i])) {
       drawPlayer(playerX, curDinoY, ST77XX_RED);
       tft.setTextColor(ST77XX_WHITE);
-      tft.setTextSize(2);
+      tft.setTextSize(1);
       tft.setCursor(42, 28);
       tft.print("GAME OVER");
       tft.setCursor(36, 40);
       tft.print("Score:");
       tft.print(displayScore);
       tft.setCursor(36, 52);
-      tft.print("Non quá, chơi lại đi");
+      tft.print("NGU");
       gameOver = true;
       return;
     }
