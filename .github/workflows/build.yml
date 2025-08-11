@@ -31,6 +31,7 @@ jobs:
         run: |
           arduino-cli lib install "Adafruit GFX Library"
           arduino-cli lib install "Adafruit ST7735 and ST7789 Library"
+          arduino-cli lib install "TFT_eSPI"
 
       # 4. Biên dịch src/src.ino cho ESP32 CP2102 DevKit v1
       - name: Compile firmware
